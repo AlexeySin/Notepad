@@ -2,19 +2,19 @@
   <div>
       <br>
     <div class="text-center">
+      <button class="btn btn-danger" @click="clear">Clean All</button>
               <input class="form-control w-50 centerPos" type="text" v-bind:placeholder="info" id="taskInput">
               <hr>
-    
-              <button class="btn btn-secondary btn-xl" @click="createSome">
+              <button class="btn btn-secondary btn-xl" @click="createSome()">
               <i class="fa fa-plus"></i>
               </button>
               <br><br>
-              <div class="list-group" v-if="view" v-for="(task,i) in tasks">
+              <div class="list-group" v-if="view" v-for="task in tasks">
                 <div class="card" v-if="task.displays" id="listPart">
     
                   <div class="card-header text-left">
-                     {{i}}
-                     <button class="btn btn-danger" @click="dropSome(i,this)" style="margin-left:200px;">
+                     {{ task.counter }}
+                     <button class="btn btn-danger" @click="dropSome(task.counter)" style="margin-left:200px;">
                       <i class="fa fa-times"></i>
                     </button>
                   </div>
@@ -33,10 +33,12 @@
   </template>
   
   <script>
+  
   export default{
     data () { 
       return{
       tasks: [{
+        counter: 1,
         text: '',
         time: '',
         displays: false
@@ -46,15 +48,16 @@
       info: 'Task...',
       }
     },
+    created(){
+     if(localStorage.getItem("tasks") && localStorage.getItem("tasks").length>0){
+     this.tasks = JSON.parse(localStorage.getItem("tasks"))
+     }
+    },
     methods: {
-      createSome () {
-        var inp = document.getElementById('taskInput')
-        if (inp.value == '') {
-          alert('Nothing to record!')
-        } else {
-          this.view = true
-          for (let i = 0; i < this.tasks.length; i++) {
-            if (this.tasks[i].text[i] == inp.value) {
+      isOldTask(inp,count){
+        for (var i = 0; i < this.tasks.length; i++) {
+            if (this.tasks[i].text == inp.value) {
+              alert('smae')
               this.err = true
               inp.value = ''
   
@@ -65,24 +68,59 @@
                 this.info = 'Task...'
                 inp.style.cssText = "border:1px solid grey"
               }.bind(this), 2500)
-              break;
+              throw true
             }
           }
+      },
+      createSome () {
+// Ты отображашь тасочки из памяти и вообщем только при создании новой
+// Нужно их отображать изначально.
+var last = this.tasks[this.tasks.length-1]
+if(!last){
+ last = 1
+}else{
+  alert('Yahoo')
+  last = this.tasks[this.tasks.length-1].counter++
+}
+alert(last)
+
+        var inp = document.getElementById('taskInput')
+        if (inp.value == '') {
+          alert('Nothing to record!')
+        } else {
+          this.view = true
+
+// Тут 2 аргумент никчему
+         // this.isOldTask(inp,taskCounter)
+        
           if (this.err == false) {
-          
+
             this.tasks.push({
+              counter: last,
               text: inp.value,
               time: new Date(),
               displays: true
             })
+// Время отображается криво
             inp.value = ''
+            localStorage.setItem("tasks", JSON.stringify(this.tasks))
+
+            alert('Task index: ' + this.counter)
           }
         }
         this.err = false
       },
       dropSome (i) {
+        this.tasks.counter--
+        localStorage.removeItem(localStorage.getItem(i));
         this.tasks.splice(i, 1)
+      },
+      clear () {
+        this.counter = 0
+        this.tasks = []
+        localStorage.clear()
       }
+      //нужен транизшен на удаление
     }
   }
   </script>
