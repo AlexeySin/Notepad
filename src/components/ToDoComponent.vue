@@ -9,12 +9,11 @@
               <i class="fa fa-plus"></i>
               </button>
               <br><br>
-              <div class="list-group" v-if="view" v-for="task in tasks">
+              <div class="list-group" v-if="view" v-for="(task,i) in tasks">
                 <div class="card" v-if="task.displays" id="listPart">
-    
                   <div class="card-header text-left">
-                     {{ task.counter }}
-                     <button class="btn btn-danger" @click="dropSome(task.counter)" style="margin-left:200px;">
+                     <span v-if="i!=0">{{ i }}</span>
+                     <button class="btn btn-danger" @click="dropSome(i)" style="margin-left:200px;">
                       <i class="fa fa-times"></i>
                     </button>
                   </div>
@@ -28,22 +27,21 @@
     
                 </div>
               </div>
+              <hr>
             </div>
     </div>
   </template>
   
   <script>
-  
   export default{
     data () { 
       return{
       tasks: [{
-        counter: 1,
         text: '',
         time: '',
         displays: false
       }],
-      view: false,
+      view: true,
       err: false,
       info: 'Task...',
       }
@@ -54,10 +52,23 @@
      }
     },
     methods: {
-      isOldTask(inp,count){
+      rememberTask (Ttext = '',Ttime = '',Tdisplays = true) {
+          if(Ttext == '' && Ttime == ''){
+             Tdisplays = false
+          }
+            this.tasks.push({
+              text: Ttext,
+              time: Ttime,
+              displays: Tdisplays
+            })
+      },
+      timeFormat(){
+         return new Date().toLocaleString()
+      },
+      isOldTask (inp) {
         for (var i = 0; i < this.tasks.length; i++) {
             if (this.tasks[i].text == inp.value) {
-              alert('smae')
+              alert('same')
               this.err = true
               inp.value = ''
   
@@ -73,54 +84,31 @@
           }
       },
       createSome () {
-// Ты отображашь тасочки из памяти и вообщем только при создании новой
-// Нужно их отображать изначально.
-var last = this.tasks[this.tasks.length-1]
-if(!last){
- last = 1
-}else{
-  alert('Yahoo')
-  last = this.tasks[this.tasks.length-1].counter++
-}
-alert(last)
-
         var inp = document.getElementById('taskInput')
         if (inp.value == '') {
           alert('Nothing to record!')
+          throw true;
         } else {
-          this.view = true
-
-// Тут 2 аргумент никчему
-         // this.isOldTask(inp,taskCounter)
-        
-          if (this.err == false) {
-
-            this.tasks.push({
-              counter: last,
-              text: inp.value,
-              time: new Date(),
-              displays: true
-            })
-// Время отображается криво
-            inp.value = ''
-            localStorage.setItem("tasks", JSON.stringify(this.tasks))
-
-            alert('Task index: ' + this.counter)
+          this.isOldTask(inp)
+          if (!this.err) {
+          this.rememberTask(inp.value,this.timeFormat())
+          inp.value = ''
+          localStorage.setItem("tasks", JSON.stringify(this.tasks))
           }
         }
         this.err = false
       },
       dropSome (i) {
-        this.tasks.counter--
+        //задавай єлементу с id = listPart 
+        //новый айди вместо старого = id, в котором будет запускать анимацию удаления
         localStorage.removeItem(localStorage.getItem(i));
         this.tasks.splice(i, 1)
       },
       clear () {
-        this.counter = 0
+        //animate here
         this.tasks = []
         localStorage.clear()
       }
-      //нужен транизшен на удаление
     }
   }
   </script>
@@ -134,24 +122,28 @@ alert(last)
   }
   
   .centerPos {
-    margin-left: 200px !important;
+    margin-left: 100px !important;
   }
   
   @keyframes creation {
     0% {
+      opacity: 0;
+      margin-left: 50px;
       background-color: lightblue;
     }
     50% {
+      opacity: 5;
       background-color: lightblue;
     }
     100% {
+      opacity: 1;
       background-color: none;
     }
   }
   
   #listPart {
     animation-name: creation;
-    animation-duration: 2s;
+    animation-duration: 2.5s;
   }
   .card{
     width: 500px !important;
