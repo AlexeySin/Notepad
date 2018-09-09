@@ -2,7 +2,14 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
 import App from './App'
+import VueNoty from 'vuejs-noty'
+import 'vuejs-noty/dist/vuejs-noty.css'
 
+Vue.use(VueNoty, {
+  timeout: 1000,
+  progressBar: true,
+  layout: 'topRight'
+})
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */
