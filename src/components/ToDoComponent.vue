@@ -5,7 +5,7 @@
       <button class="btn btn-danger" @click="clear">Clean All</button>
       <input id="searchField" class="form-control" v-on:keyup="search" type="text" placeholder="Search...">
               <hr>
-              <input id="taskName" class="taskNameField form-control" type="text" placeholder="Name...">
+              <input id="taskName" class="form-control" type="text" placeholder="Name...">
               <textarea id="taskInput" class="form-control w-50 centerPos" v-bind:placeholder="info"></textarea>
               <hr>
               <button class="btn btn-secondary btn-xl" @click="createSome()">
@@ -18,10 +18,11 @@
                     <table>
                       <tr>
                         <td>
-                     <span id="elemCounterIndex"><kbd class="bg-info">{{ count(i) }}</kbd></span>
+                     <span><kbd class="bg-info">{{ count(i) }}</kbd></span>
+                     <span id="elemCounterIndex" style="visibility:hidden !important">{{ task.ind }}</span>
                      </td>
                      <td style="margin-left: 150px">
-                       <span>{{ task.name }}</span>
+                       <span class="taskNameField">{{ task.name }}</span>
                        </td>
                      </tr>
                      </table>
@@ -66,92 +67,100 @@ export default {
       localStorage.getItem("tasks") &&
       localStorage.getItem("tasks").length > 0
     ) {
+      // нужно показывать по дефолту таски из памяти
       this.tasks = JSON.parse(localStorage.getItem("tasks"))
     }
   },
   methods: {
-    search () {
-      var inpt = $("#searchField").val()
-      var elems = document.getElementsByClassName('taskNameField')
-      for(var i=0; i<elems.length; i++){
-         if(inpt == elems[i].innerHTML){
-           //not 100% but LIKE in SQL
+    search() {
+      // if task has no name than search only by text 
+      var inpt = $("#searchField").val();
+      var elems = document.getElementsByClassName("taskNameField");
+      for (var i = 0; i < elems.length; i++) {
+        if (inpt == elems[i].innerHTML) { // same for task name, not only text
 
-           //Search by name
-           $(elems[i])
+          //not 100% but LIKE in SQL
+
+          $(elems[i])
             .closest("#listPart")
-            .addClass('visible')
-         }
+            .addClass("visible");
+        }
       }
     },
-    count (i){
-         i++; return i
+    count(i) {
+      i++;
+      return i;
     },
     warning(message = "", inp = null) {
-      inp.style.cssText = "border:2px solid red"
-      this.info = message
+      inp.style.cssText = "border:2px solid red";
+      this.info = message;
       setTimeout(
         function() {
-          this.info = "Task..."
-          inp.style.cssText = "border:1px solid grey"
+          this.info = "Task...";
+          inp.style.cssText = "border:1px solid grey";
         }.bind(this),
         2500
       );
     },
     rememberTask(Tname = "", Ttext = "", Ttime = "", Tdisplays = true) {
-      //Сѓ С‚Р°СЃРѕС‡РєРё РґР»Р¶РЅРѕ Р±С‹С‚СЊ РёРјСЏ, РїРѕ РЅРµРјСѓ Рё РёС‰РµРј.
-      var Tind = 1
+      var Tind = 1;
       if (this.tasks.length > 0) {
-        for(var i = 0; i<this.tasks.length; i++){
-         if(this.tasks[i] == this.tasks[this.tasks.length-1]){
-             Tind += this.tasks[i].ind
-         }
+        for (var i = 0; i < this.tasks.length; i++) {
+          if (this.tasks[i] == this.tasks[this.tasks.length - 1]) {
+            Tind += this.tasks[i].ind;
+          }
         }
       }
-      if (Ttext == "" && Ttime == "" && Tname == "") {
+      if (Tname == "" && Ttext == "" && Ttime == "") {
         Tdisplays = false;
       }
-      this.tasks.push({
+      var objSet = {
         ind: Tind,
         name: Tname,
         text: Ttext,
         time: Ttime,
         displays: Tdisplays
-      });
-      this.$noty.success("Task added successfully!")
+      }
+      this.tasks.push(objSet)
+      localStorage.setItem(Tind, JSON.stringify(objSet));
+      this.$noty.success("Task added successfully!");
     },
     timeFormat() {
-      return new Date().toLocaleString()
+      return new Date().toLocaleString();
     },
-    isOldTask(inp) {
+    isOldTask(inp, name_inp) {
       for (var i = 0; i < this.tasks.length; i++) {
-        if (this.tasks[i].text == inp.value) {
+        if (
+          this.tasks[i].text == inp.value ||
+          this.tasks[i].name == name_inp.value
+        ) {
           this.err = true;
           inp.value = "";
-          this.warning("This task already exist", inp)
+          this.warning("This task already exist", inp);
         }
       }
     },
     createSome() {
       var inp = document.getElementById("taskInput")
-      if (inp.value == "") {
+      var name_inp = document.getElementById("taskName")
+      if (inp.value == "" && name_inp.value == "") {
         this.warning("Nothing to record", inp)
       } else {
-        this.isOldTask(inp)
+        this.isOldTask(inp, name_inp)
         if (!this.err) {
-          this.rememberTask(inp.value, this.timeFormat())
+          this.rememberTask(name_inp.value, inp.value, this.timeFormat())
           inp.value = ""
-          localStorage.setItem("tasks", JSON.stringify(this.tasks))
+          name_inp.value = ""
         }
       }
-      this.err = false
+      this.err = false;
     },
     dropSome(i) {
       var elems = [];
       elems = $("#elemCounterIndex");
-      for (var j = 0; j < elems.length; j++) {
-        if (elems[j].innerHTML == i) {
-          $(elems[j])
+      for (var r = 0; r < elems.length; r++) {
+        if (elems[r].innerHTML == i) {
+          $(elems[r])
             .closest("#listPart")
             .addClass("delete")
         }
@@ -160,33 +169,35 @@ export default {
       setTimeout(function(i) {
          for(var j = 0; j<self.tasks.length; j++){
            if(self.tasks.ind == i){
-            localStorage.removeItem(localStorage.getItem(self.tasks[j].ind))
-            self.tasks.splice(self.tasks[j].ind, 1)
+             // вот сюда смотри
+            localStorage.removeItem(self.tasks.ind)
+            self.tasks.splice(self.tasks[j], 1)
+            break
            }
          }
       }, 1000)
-      this.$noty.success("Task has been removed!")
+      this.$noty.success("Task has been removed!");
     },
     clear() {
       var check;
       if (this.tasks.length > 0) {
-        check = true
+        check = true;
       } else {
-        check = false
+        check = false;
       }
-      var tasksList = document.getElementsByClassName("list-group")
+      var tasksList = document.getElementsByClassName("list-group");
       for (var i = 0; i < tasksList.length; i++) {
-        tasksList[i].setAttribute("id", "delete")
+        tasksList[i].setAttribute("id", "delete");
       }
       var self = this;
       setTimeout(function() {
-        self.tasks = []
-        localStorage.clear()
-      },1500);
+        self.tasks = [];
+        localStorage.clear();
+      }, 1500);
       if (check) {
-        this.$noty.success("All tasks removed successfully!")
+        this.$noty.success("All tasks removed successfully!");
       } else {
-        this.$noty.warning("Nothing to delete")
+        this.$noty.warning("Nothing to delete");
       }
     }
   }
@@ -230,21 +241,21 @@ export default {
   margin-left: 432px;
 }
 
-.delete{
+.delete {
   opacity: 0;
   transition: 0.5s;
 }
 
-#delete{
+#delete {
   margin-left: 250px !important;
   opacity: 0;
-  transition: .5s;
+  transition: 0.5s;
 }
 
-.hide{
+.hide {
   visibility: hidden !important;
 }
-.visible{
+.visible {
   border: 5px solid lightblue !important;
 }
 </style>
