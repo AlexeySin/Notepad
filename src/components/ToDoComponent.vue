@@ -19,7 +19,7 @@
                       <tr>
                         <td>
                      <span><kbd class="bg-info">{{ count(i) }}</kbd></span>
-                     <span id="elemCounterIndex" style="visibility:hidden !important">{{ task.ind }}</span>
+                     <span id="elemCounterIndex">{{ task.ind }}</span>
                      </td>
                      <td style="margin-left: 150px">
                        <span class="taskNameField">{{ task.name }}</span>
@@ -46,11 +46,12 @@
   
   <script>
 export default {
+  // add change() feature for text on click on task-text(evernote)
   data() {
     return {
       tasks: [
         {
-          ind: 0,
+          ind: 1,
           name: "",
           text: "",
           time: "",
@@ -62,40 +63,55 @@ export default {
       info: "Task..."
     };
   },
+  beforeCreate () {
+    localStorage.clear();
+  },
   created() {
-   var indexes = [] 
-   for(var s=0; s<localStorage.length; s++){
-     if(s!=0){
-     indexes.push(JSON.parse(localStorage[s]).ind)
-   }
- }
-  var elems = []
-  for(var i=1; i<localStorage.length; i++){
-   for(var j=0; j<indexes.length; j++){
-    if(JSON.parse(localStorage[i]).ind == indexes[j]){
-     elems.push(JSON.parse(localStorage[i]))
+    var indexes = [];
+    if (localStorage.length > 1) {
+      for (var s = 1; s < localStorage.length; s++) {
+        if (localStorage[s]) {
+          indexes.push(JSON.parse(localStorage[s]).ind);
+        }
+      }
     }
-   }
- }
-   this.tasks = elems
-   this.view = true 
-//tasks in memory and in tasks but not displaying
+    var elems = [];
+    for (var i = 1; i < localStorage.length; i++) {
+      for (var j = 0; j < indexes.length; j++) {
+        if (localStorage[i]) {
+          if (JSON.parse(localStorage[i]).ind == indexes[j]) {
+            elems.push(JSON.parse(localStorage[i]));
+          }
+        }
+      }
+    }
+    this.tasks = elems;
+    this.view = true;
+    this.fresh();
   },
   methods: {
+    fresh() {
+      if (localStorage.getItem("fresh")) {
+        localStorage.removeItem("fresh");
+      } else {
+        localStorage.setItem("fresh", "1");
+        location.reload();
+      }
+    },
     search() {
-      // test for working, need styling or smthng
+      // DOES NOT WORK
       var inpt = $("#searchField").val();
-      var elems = document.getElementsByClassName("taskNameField")
+      var elems = document.getElementsByClassName("taskNameField");
       for (var i = 0; i < elems.length; i++) {
-        if (inpt == elems[i].innerHTML) { 
+        if (inpt == elems[i].innerHTML) {
           $(elems[i])
             .closest("#listPart")
             .addClass("visible");
         }
       }
-      var texts = document.getElementsByClassName("taskTextField")
+      var texts = document.getElementsByClassName("taskTextField");
       for (var j = 0; j < texts.length; j++) {
-        if (inpt == elems[j].innerHTML) { 
+        if (inpt == elems[j].innerHTML) {
           $(elems[i])
             .closest("#listPart")
             .addClass("visible");
@@ -126,7 +142,7 @@ export default {
           }
         }
       }
-      if ((Tname == "") && (Ttext == "") && (Ttime == "")) {
+      if (Tname == "" && Ttext == "" && Ttime == "") {
         Tdisplays = false;
       }
       var objSet = {
@@ -135,8 +151,8 @@ export default {
         text: Ttext,
         time: Ttime,
         displays: Tdisplays
-      }
-      this.tasks.push(objSet)
+      };
+      this.tasks.push(objSet);
       localStorage.setItem(Tind, JSON.stringify(objSet));
       this.$noty.success("Task added successfully!");
     },
@@ -145,40 +161,40 @@ export default {
     },
     isOldTask(inp, name_inp) {
       for (var i = 0; i < this.tasks.length; i++) {
-        if ((this.tasks[i].text == inp.value) || (this.tasks[i].name == name_inp.value)) {
+        if (
+          this.tasks[i].text == inp.value ||
+          this.tasks[i].name == name_inp.value
+        ) {
           this.err = true;
           inp.value = "";
+          name_inp.value = "";
+          this.warning("", name_inp);
           this.warning("This task already exist", inp);
         }
       }
     },
-    createSome() {  
-      var inp = document.getElementById("taskInput")
-      var name_inp = document.getElementById("taskName")
-      if ((inp.value == "") && (name_inp.value == "")) {
-        this.warning("Nothing to record", inp)
+    createSome() {
+      var inp = document.getElementById("taskInput");
+      var name_inp = document.getElementById("taskName");
+      if (inp.value == "" && name_inp.value == "") {
+        this.warning("Nothing to record", inp);
       } else {
-        this.isOldTask(inp, name_inp)
+        this.isOldTask(inp, name_inp);
         if (!this.err) {
-          this.rememberTask(name_inp.value, inp.value, this.timeFormat())
-          inp.value = ""
-          name_inp.value = ""
+          this.rememberTask(name_inp.value, inp.value, this.timeFormat());
+          inp.value = "";
+          name_inp.value = "";
         }
       }
       this.err = false;
     },
-    dropSome(i) {
-         for(var j = 0; j<this.tasks.length; j++){
-           if(this.tasks[j].ind == i){
-            //localStorage.removeItem(this.tasks[j].ind)
-            //this.tasks.splice(this.tasks[j], 1)
-           alert(this.tasks[j])
-           }
-         }
+    dropSome(index) {
+      //ISSUES
+      localStorage.removeItem(index);
+      this.fresh();
       this.$noty.success("Task has been removed!");
     },
     clear() {
-      // deletion must be in time
       var check;
       if (this.tasks.length > 0) {
         check = true;
@@ -193,7 +209,7 @@ export default {
       setTimeout(function() {
         self.tasks = [];
         localStorage.clear();
-      }, 1500);
+      }, 1000);
       if (check) {
         this.$noty.success("All tasks removed successfully!");
       } else {
@@ -257,6 +273,9 @@ export default {
 }
 .visible {
   border: 5px solid lightblue !important;
+}
+#elemCounterIndex{
+  visibility: hidden !important;
 }
 </style>
 
