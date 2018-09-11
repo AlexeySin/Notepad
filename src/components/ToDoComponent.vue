@@ -32,7 +32,7 @@
                   </div>
                   <div class="card-body">
                     <blockquote class="blockquote mb-0 text-left">
-                      <p id="taskTextContent">{{task.text}}</p>
+                      <p id="taskTextContent" class="taskTextField">{{task.text}}</p>
                       <footer class="blockquote-footer text-left"><i>{{task.time}}</i></footer>
                     </blockquote>
                   </div>
@@ -63,24 +63,39 @@ export default {
     };
   },
   created() {
-    if (
-      localStorage.getItem("tasks") &&
-      localStorage.getItem("tasks").length > 0
-    ) {
-      // нужно показывать по дефолту таски из памяти
-      this.tasks = JSON.parse(localStorage.getItem("tasks"))
+   var indexes = [] 
+   for(var s=0; s<localStorage.length; s++){
+     if(s!=0){
+     indexes.push(JSON.parse(localStorage[s]).ind)
+   }
+ }
+  var elems = []
+  for(var i=1; i<localStorage.length; i++){
+   for(var j=0; j<indexes.length; j++){
+    if(JSON.parse(localStorage[i]).ind == indexes[j]){
+     elems.push(JSON.parse(localStorage[i]))
     }
+   }
+ }
+   this.tasks = elems
+   this.view = true 
+//tasks in memory and in tasks but not displaying
   },
   methods: {
     search() {
-      // if task has no name than search only by text 
+      // test for working, need styling or smthng
       var inpt = $("#searchField").val();
-      var elems = document.getElementsByClassName("taskNameField");
+      var elems = document.getElementsByClassName("taskNameField")
       for (var i = 0; i < elems.length; i++) {
-        if (inpt == elems[i].innerHTML) { // same for task name, not only text
-
-          //not 100% but LIKE in SQL
-
+        if (inpt == elems[i].innerHTML) { 
+          $(elems[i])
+            .closest("#listPart")
+            .addClass("visible");
+        }
+      }
+      var texts = document.getElementsByClassName("taskTextField")
+      for (var j = 0; j < texts.length; j++) {
+        if (inpt == elems[j].innerHTML) { 
           $(elems[i])
             .closest("#listPart")
             .addClass("visible");
@@ -111,7 +126,7 @@ export default {
           }
         }
       }
-      if (Tname == "" && Ttext == "" && Ttime == "") {
+      if ((Tname == "") && (Ttext == "") && (Ttime == "")) {
         Tdisplays = false;
       }
       var objSet = {
@@ -130,20 +145,17 @@ export default {
     },
     isOldTask(inp, name_inp) {
       for (var i = 0; i < this.tasks.length; i++) {
-        if (
-          this.tasks[i].text == inp.value ||
-          this.tasks[i].name == name_inp.value
-        ) {
+        if ((this.tasks[i].text == inp.value) || (this.tasks[i].name == name_inp.value)) {
           this.err = true;
           inp.value = "";
           this.warning("This task already exist", inp);
         }
       }
     },
-    createSome() {
+    createSome() {  
       var inp = document.getElementById("taskInput")
       var name_inp = document.getElementById("taskName")
-      if (inp.value == "" && name_inp.value == "") {
+      if ((inp.value == "") && (name_inp.value == "")) {
         this.warning("Nothing to record", inp)
       } else {
         this.isOldTask(inp, name_inp)
@@ -156,29 +168,17 @@ export default {
       this.err = false;
     },
     dropSome(i) {
-      var elems = [];
-      elems = $("#elemCounterIndex");
-      for (var r = 0; r < elems.length; r++) {
-        if (elems[r].innerHTML == i) {
-          $(elems[r])
-            .closest("#listPart")
-            .addClass("delete")
-        }
-      }
-      var self = this
-      setTimeout(function(i) {
-         for(var j = 0; j<self.tasks.length; j++){
-           if(self.tasks.ind == i){
-             // вот сюда смотри
-            localStorage.removeItem(self.tasks.ind)
-            self.tasks.splice(self.tasks[j], 1)
-            break
+         for(var j = 0; j<this.tasks.length; j++){
+           if(this.tasks[j].ind == i){
+            //localStorage.removeItem(this.tasks[j].ind)
+            //this.tasks.splice(this.tasks[j], 1)
+           alert(this.tasks[j])
            }
          }
-      }, 1000)
       this.$noty.success("Task has been removed!");
     },
     clear() {
+      // deletion must be in time
       var check;
       if (this.tasks.length > 0) {
         check = true;
