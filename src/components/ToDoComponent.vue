@@ -3,8 +3,6 @@
       <br>
     <div class="text-center">
       <button class="btn btn-danger" @click="clear">Clean All</button>
-      <input id="searchField" class="form-control" v-on:keyup="search" type="text" placeholder="Search...">
-              <hr>
               <input id="taskName" class="form-control" type="text" placeholder="Name...">
               <textarea id="taskInput" class="form-control w-50 centerPos" v-bind:placeholder="info"></textarea>
               <hr>
@@ -13,7 +11,7 @@
               </button>
               <br><br>
               <div class="list-group" v-if="view" v-for="(task,i) in tasks">
-                <div id="listPart" class="card" v-if="task.displays">
+                <div id="listPart" class="card" v-if="task.displays" @click="change">
                   <div class="card-header text-left">
                     <table>
                       <tr>
@@ -26,7 +24,7 @@
                        </td>
                      </tr>
                      </table>
-                     <button class="btn btn-danger" @click="dropSome(task.ind)" style="margin-left:200px;">
+                     <button class="btn btn-danger" @click="dropSome(task.ind); task.displays = false;" style="margin-left:200px;">
                       <i class="fa fa-times"></i>
                     </button>
                   </div>
@@ -36,7 +34,6 @@
                       <footer class="blockquote-footer text-left"><i>{{task.time}}</i></footer>
                     </blockquote>
                   </div>
-    
                 </div>
               </div>
               <hr>
@@ -46,7 +43,6 @@
   
   <script>
 export default {
-  // add change() feature for text on click on task-text(evernote)
   data() {
     return {
       tasks: [
@@ -62,9 +58,6 @@ export default {
       err: false,
       info: "Task..."
     };
-  },
-  beforeCreate () {
-    localStorage.clear();
   },
   created() {
     var indexes = [];
@@ -87,7 +80,6 @@ export default {
     }
     this.tasks = elems;
     this.view = true;
-    this.fresh();
   },
   methods: {
     fresh() {
@@ -96,26 +88,6 @@ export default {
       } else {
         localStorage.setItem("fresh", "1");
         location.reload();
-      }
-    },
-    search() {
-      // DOES NOT WORK
-      var inpt = $("#searchField").val();
-      var elems = document.getElementsByClassName("taskNameField");
-      for (var i = 0; i < elems.length; i++) {
-        if (inpt == elems[i].innerHTML) {
-          $(elems[i])
-            .closest("#listPart")
-            .addClass("visible");
-        }
-      }
-      var texts = document.getElementsByClassName("taskTextField");
-      for (var j = 0; j < texts.length; j++) {
-        if (inpt == elems[j].innerHTML) {
-          $(elems[i])
-            .closest("#listPart")
-            .addClass("visible");
-        }
       }
     },
     count(i) {
@@ -145,15 +117,15 @@ export default {
       if (Tname == "" && Ttext == "" && Ttime == "") {
         Tdisplays = false;
       }
-      var objSet = {
+      var objSave = {
         ind: Tind,
         name: Tname,
         text: Ttext,
         time: Ttime,
         displays: Tdisplays
-      };
-      this.tasks.push(objSet);
-      localStorage.setItem(Tind, JSON.stringify(objSet));
+      }
+      this.tasks.push(objSave);
+      localStorage.setItem(Tind, JSON.stringify(objSave));
       this.$noty.success("Task added successfully!");
     },
     timeFormat() {
@@ -178,8 +150,8 @@ export default {
       var name_inp = document.getElementById("taskName");
       if (inp.value == "" && name_inp.value == "") {
         this.warning("Nothing to record", inp);
-      } else {
-        this.isOldTask(inp, name_inp);
+      } else { 
+        this.isOldTask(inp, name_inp);     
         if (!this.err) {
           this.rememberTask(name_inp.value, inp.value, this.timeFormat());
           inp.value = "";
@@ -188,10 +160,8 @@ export default {
       }
       this.err = false;
     },
-    dropSome(index) {
-      //ISSUES
-      localStorage.removeItem(index);
-      this.fresh();
+    dropSome(task_ind) {
+      localStorage.removeItem(task_ind);
       this.$noty.success("Task has been removed!");
     },
     clear() {
@@ -215,6 +185,9 @@ export default {
       } else {
         this.$noty.warning("Nothing to delete");
       }
+    },
+    change() {
+// Last feature
     }
   }
 };
@@ -257,6 +230,10 @@ export default {
   margin-left: 432px;
 }
 
+.card:hover{
+  cursor: pointer; 
+}
+
 .delete {
   opacity: 0;
   transition: 0.5s;
@@ -274,11 +251,8 @@ export default {
 .visible {
   border: 5px solid lightblue !important;
 }
-#elemCounterIndex{
+#elemCounterIndex {
   visibility: hidden !important;
 }
 </style>
-
-
-
 
